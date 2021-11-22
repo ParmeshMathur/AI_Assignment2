@@ -1,30 +1,28 @@
-from _typeshed import Self
-import numpy as np
+
 
 # GAME
 class Connect4Board:
-    numrows = 5
-    numcols = 4
 
     def __init__(self):
         self.board = [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]
         self.highest = [0,0,0,0,0]
     
     def move(self, col, player):
-        if self.board[col][self.highest[col]]==5:
+        if self.highest[col]>=6:
             return 1
         else:
-            self.board[col][(self.highest)[col]]=player
+            self.board[col][self.highest[col]]=player
             self.highest[col]+=1
+        return 0
     
     def isWin(self, col, player):
         row = self.highest[col]
 
         # principal diag
         together=1
-        if col>1:
+        if col>0:
             i=1
-            while((i<=col and row+i<= 5) and self.board[col-i][row+i]==player):
+            while((i<=col and row+i<=5) and self.board[col-i][row+i]==player):
                 together+=1
                 i+=1
         if col<4:
@@ -37,9 +35,9 @@ class Connect4Board:
 
         # other diagonal
         together=1
-        if col>1:
+        if col>0:
             i=1
-            while((i<=col and row+i<= 5) and self.board[col-i][row-i]==player):
+            while((i<=col and row+i<=5) and self.board[col-i][row-i]==player):
                 together+=1
                 i+=1
         if col<4:
@@ -52,7 +50,7 @@ class Connect4Board:
 
         # horizontal
         together=1
-        if col>1:
+        if col>0:
             i=1
             while(i<=col and self.board[col-i][row]==player):
                 together+=1
