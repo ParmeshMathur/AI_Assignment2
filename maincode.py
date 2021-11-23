@@ -4,30 +4,30 @@
 class Connect4Board:
 
     def __init__(self):
-        self.board = [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]
-        self.highest = [0,0,0,0,0]
+        self.board = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+        self.highest =  [0,0,0,0,0]
     
     def move(self, col, player):
         if self.highest[col]>=6:
             return 1
         else:
-            self.board[col][self.highest[col]]=player
+            self.board[5-self.highest[col]][col]=player
             self.highest[col]+=1
         return 0
     
     def isWin(self, col, player):
-        row = self.highest[col]
+        row = 5-self.highest[col]
 
         # principal diag
         together=1
         if col>0:
             i=1
-            while((i<=col and row+i<=5) and self.board[col-i][row+i]==player):
+            while((i<=col and i<=row) and self.board[row-i][col-i]==player):
                 together+=1
                 i+=1
         if col<4:
             i=1
-            while((col+i<=4 and i<=row) and self.board[col+i][row-i]==player):
+            while((col+i<=4 and row+i<=5) and self.board[row+i][col+i]==player):
                 together+=1
                 i+=1
         if together==4:
@@ -57,7 +57,7 @@ class Connect4Board:
                 i+=1
         if col<4:
             i=1
-            while(col+1<=4 and self.board[col+i][row]==player):
+            while(col+i<=4 and self.board[col+i][row]==player):
                 together+=1
                 i+=1
         if together==4:
@@ -67,7 +67,7 @@ class Connect4Board:
         together=1
         if row >=3:
             i=1
-            while(i<=row and self.board[col][row-i]==player):
+            while(row+i<=5 and self.board[col][row+i]==player):
                 together+=1
                 i+=1
         if together==4:
