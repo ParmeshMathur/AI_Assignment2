@@ -2,7 +2,7 @@ from random import randint
 
 # GAME
 class Connect4Board:
-
+    # TODO: change states to strings
     def __init__(self):
         self.board = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
         # self.board = ["000000000000000000000000000000"]
@@ -76,30 +76,70 @@ class Connect4Board:
         
         return False
 
-# MCTS
-# start from root
-# check maxim value for each child node iteratively
-    # if any node is not visited before that is next node
-    # else next node is the node that maximizes the value that we want maximized
-# while curr node is not a leaf node
+def encoder(decState):
+    encState = ""
+    for i in range(6):
+        for j in range(5):
+            encState+=str(decState[i][j])
+    return encState
 
+def decoder(encState):
+    decState = [0,0,0,0,0] * 6
+    for i in range(30):
+        decState[int(i/5)][i%5] = int(encState[i])
+    return decState
+
+# MCTSNode
+class MCTSNOde:
+    def __init__(self, state):
+        self.state = state
+        self.children = []
+
+# MCTS
+# TODO: has to be a recursive function
+class MCTS:
+    def __init__(self, turn):
+        self.turn = turn
+        self.root = MCTSNOde("000000000000000000000000000000")
+    
+    def player():
+        pass
+    # start from root
+    # check maxim value for each child node iteratively
+        # if any node is not visited before that is next node
+        # else next node is the node that maximizes the value that we want maximized
+    # while curr node is not a leaf node
 
 # Q-learning
-qtable = {"000000000000000000000000000000": [1,1,1,1,1]}
-# start from whatever state given to you
-# state will not exist so make a new row with all q values at 5
-currstate = "000000000000000000000000000000"
-while True:
-    # choose a state either exploit or explore
-    prob = randint(0,10)
-    newact=0
-    if prob==1:
-        newact = randint(0,5)
-    else:
-        newact = qtable[currstate].index(max(qtable[currstate]))
+class Qlearning:
 
-    # newstate = 
+    def __init__(self, turn):
+        self.turn = turn
+    # TODO: change code to accept string states
+    def player():
+        qtable = {"000000000000000000000000000000": [1,1,1,1,1]}
+        # start from whatever state given to you
+        # state will not exist so make a new row with all q values at 1
+        currstate = "000000000000000000000000000000"
+        gboard = Connect4Board()
+        while True:
+            # choose a state either exploit or explore
+            prob = randint(0,9)
+            newact=0
+            if prob==1:
+                newact = randint(0,4)
+            else:
+                newact = qtable[currstate].index(max(qtable[currstate]))
 
-    # if state to new action doesn't exist make a new row, assign all q value in row to 5
-    # Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[new_state, :]) — Q[state, action])
-# till state is terminal
+            # newstate = self.encoder()
+            gboard.move(newact, 2)
+            newstate = encoder(gboard.board)
+
+            # if state to new action doesn't exist make a new row, assign all q value in row to 1
+            if newstate not in qtable:
+                qtable[newstate] = [1,1,1,1,1]
+            # else:
+                # qtable[currstate][newact] += lr * (reward + gamma * nmax(qtable[newstate]) — qtable[currstate][newact])
+            
+            # if state is terminal:
+                # break
