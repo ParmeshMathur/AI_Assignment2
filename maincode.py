@@ -90,24 +90,45 @@ def decoder(encState):
     return decState
 
 # MCTSNode
-class MCTSNOde:
+class MCTSNode:
     def __init__(self, state):
         self.state = state
         self.children = []
+        self.plays = 0
+        self.wins = 0
 
 # MCTS
 # TODO: has to be a recursive function
 class MCTS:
     def __init__(self, turn):
         self.turn = turn
-        self.root = MCTSNOde("000000000000000000000000000000")
+        self.root = MCTSNode("000000000000000000000000000000")
+
+    def playout(state):
+        return 1
     
-    def player():
-        pass
-    # start from root
-    # check maxim value for each child node iteratively
-        # if any node is not visited before that is next node
-        # else next node is the node that maximizes the value that we want maximized
+    def player(self, currnode):
+        # start from root
+        if len(currnode.children)==0:
+            return self.playout(currnode.state)
+
+        # check maxim value for each child node iteratively
+        maxnode = currnode.children[0]
+        for node in currnode.children:
+            # if any node is not visited before that is next node
+            if node.plays==0:
+                maxnode = node
+                break
+            # else next node is the node that maximizes the value that we want maximized
+            elif node.wins/node.plays > maxnode.wins/maxnode.plays: 
+                maxnode = node
+        
+        win = self.player(maxnode)
+        if win==1:
+            currnode.wins+=1
+        currnode.plays+=1
+        return win
+        
     # while curr node is not a leaf node
 
 # Q-learning
