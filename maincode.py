@@ -2,7 +2,6 @@ from random import randint
 
 # GAME
 class Connect4Board:
-    # TODO: change states to strings
     def __init__(self):
         self.board = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
         # self.board = ["000000000000000000000000000000"]
@@ -107,7 +106,7 @@ class MCTS:
     def playout(state):
         temp = Connect4Board()
         temp.board = state
-        
+
         return 1
     
     def player(self, currnode):
