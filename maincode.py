@@ -105,6 +105,9 @@ class MCTS:
         self.root = MCTSNode("000000000000000000000000000000")
 
     def playout(state):
+        temp = Connect4Board()
+        temp.board = state
+        
         return 1
     
     def player(self, currnode):
