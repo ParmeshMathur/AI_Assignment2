@@ -24,7 +24,7 @@ def move(state, col, player):
     else:
         temp = []
         temp[:0] = state
-        print(state)
+        # print(state)
         for i in range(5,-1,-1):
             if temp[5*i + col]=='0':
                 temp[5*i + col]=chr(player+ord('0'))
@@ -32,7 +32,7 @@ def move(state, col, player):
         state=""
         for i in temp:
             state += i
-    print(state)
+    # print(state)
     return state
 
 def isWin(state, col, play):
@@ -171,8 +171,8 @@ def traverse(root):
     root.plays+=1
     return -retval
 
-def mcts(root):
-    n = 10
+def mcts(root, n):
+    # n = 10
     for i in range(n):
         traverse(root)
     
@@ -215,9 +215,9 @@ def main():
 
     while True:
         print()
-        print()
+        # print()
         if turn==1:
-            action = mcts(mctscurr)
+            action = mcts(mctscurr, 40)
             mctscurr = mctscurr.children[action]
         else:
             action = randint(0,4)
@@ -228,9 +228,9 @@ def main():
             mctscurr = mctscurr.children[action]
         if isWin(mctscurr.state, action, turn):
             if turn==1:
-                print("MCTS has won")
+                print("MCTS40 has won")
             else:
-                print("MCTS has lost")
+                print("MCTS100 has won")
             break
         turn = turn^3          
     print("game over")
