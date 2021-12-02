@@ -1,5 +1,6 @@
 from random import randint
 from math import sqrt, log2
+from types import new_class
 
 class GameNode:
     def __init__(self, state, turn, parent) -> None:
@@ -10,7 +11,7 @@ class GameNode:
         self.losses = 0
         self.parent = parent
         self.children = [None]*5
-
+        self.highest = [5,5,5,5,5]
 
 def move(state, col, player):
     # print("move col:", col)
@@ -113,9 +114,9 @@ def simulate(node, player):
         act = randint(0,4)
         new = move(curr, act, turn)
         while new==curr:
-            act = randint(0,4)
-            # new = move(curr, act, turn)
-            act+=1
+            # act = randint(0,4)
+            act=(act+1)%5
+            new = move(curr, act, turn)
         highest[act]-=1
         if isWin(new, act, turn):
             if turn==player:
@@ -135,14 +136,17 @@ def simulate(node, player):
 def traverse(root):
     retval=0
     # exploration factor
-    c = 1.1
+    c = 1.5
     # print(root.state)
     
     if (not root.children[0]):
         # create 5 empty nodes
         # print("extension")
         for i in range(5):
+            if root.highest[i]<0:
+                continue
             root.children[i] = GameNode(move(state=root.state, col=i, player=root.turn), root.turn ^ 3, root)
+            root.children[i].highest[i]-=1
         # choose one of them at random
         next = randint(0,4)
         # print("next:", next)
@@ -153,10 +157,14 @@ def traverse(root):
         # keep selecting nodes based on UCT
         nextNode = root.children[0]
         for node in root.children:
-            # UCB(node) = wins/plays + C*sqrt(log2(Parent(node))/plays)
-            if node.plays == 0:
+            if not node:
+                continue
+            elif not nextNode:
+                nextNode = node
+            elif node.plays == 0:
                 nextNode = node
                 break
+            # UCB(node) = wins/plays + C*sqrt(log2(Parent(node))/plays)
             elif node.wins/node.plays + c*sqrt(log2(root.plays/node.plays)) > nextNode.wins/nextNode.plays + c*sqrt(log2(root.plays/nextNode.plays)):
                 nextNode = node
         retval = traverse(nextNode) * -1
@@ -171,9 +179,36 @@ def traverse(root):
 def mcts(root, n):
     # n = 10
     for i in range(n):
-        traverse(root)
+        ret = traverse(root)
+        while root.parent:
+            if ret==1:
+                root.parent.losses += 1
+            elif ret==-1:
+                root.parent.wins += 1
+            root.parent.plays += 1
+            root = root.parent
+            ret*=-1
     
-    newact = root.children.index(max(root.children, key=lambda node: node.plays))
+    # newact = root.children.index(max(root.children, key=lambda node: node.plays))
+    newact=0
+    temp = newact
+    flag = True
+    if root.highest[newact]<0:
+        print("newact:", newact, end=" ")
+        newact = (newact+1)%5
+        flag = False
+    while root.highest[newact]<0 and newact!=temp:
+        print(newact, end=" ")
+        newact = (newact+1)%5
+    if newact==temp and not flag:
+        return -1
+    for i in range(5):
+        if root.children[i].plays==0:
+            newact=i
+            break
+        if root.highest[i]>=0 and root.children[i].plays > root.children[newact].plays:
+            newact=i
+    print("newact", newact)
     return newact
 
 def qlearning(currstate):
@@ -215,39 +250,55 @@ def main():
     # winTally2 = [0,0]
 
     global qtable
-    qtable = {"000000000000000000000000000000": [1,1,1,1,1]}
+    qtable = {"000000000000000000000000000000": [5,5,5,5,5]}
 
-    for j in range(10):
+    for j in range(50):
+        mctsroot1 = GameNode("000000000000000000000000000000", 1, None)
+        mctsroot2 = GameNode("000000000000000000000000000000", 2, None)
+        mctscurr1 = mctsroot1
+        mctscurr2 = mctsroot2
+        print(mctscurr2.state)
         while True:
             print()
-            print(mctscurr2.state)
             if turn==1:
                 action = mcts(mctscurr1, 40)
+                if action == -1:
+                    break
                 mctscurr1 = mctscurr1.children[action]
                 if (not mctscurr2.children[0]):
                     # create 5 empty nodes
                     for i in range(5):
-                        mctscurr2.children[i] = GameNode(move(state=mctscurr2.state, col=i, player=mctscurr2.turn), mctscurr2.turn ^ 3, mctscurr2)
+                        mctscurr2.children[i] = GameNode(move(state=mctscurr2.state, col=i, player=turn), turn ^ 3, mctscurr2)
+                        mctscurr2.children[i].highest[i]-=1
                 mctscurr2 = mctscurr2.children[action]
+                print(turn, action)
+                print(mctscurr1.state)
             else:
                 action = mcts(mctscurr2, 200)
+                if action == -1:
+                    break
                 mctscurr2 = mctscurr2.children[action]
                 if (not mctscurr1.children[0]):
                     # create 5 empty nodes
                     for i in range(5):
-                        mctscurr1.children[i] = GameNode(move(state=mctscurr1.state, col=i, player=mctscurr1.turn), mctscurr1.turn ^ 3, mctscurr1)
+                        mctscurr1.children[i] = GameNode(move(state=mctscurr1.state, col=i, player=turn), turn ^ 3, mctscurr1)
+                        mctscurr1.children[i].highest[i]-=1
                 mctscurr1 = mctscurr1.children[action]
+                print(turn, action)
+                print(mctscurr2.state)
             if isWin(mctscurr1.state, action, turn):
                 if turn==1:
-                    print("MCTS40 has won")
+                    print("MCTS200 has won")
                     winTally1[0]+=1
                 else:
-                    print("MCTS200 has won")
+                    print("MCTS40 has won")
                     winTally1[1]+=1
                 break
             turn = turn^3          
-        print("game over")
+        print("game over \n")
+        print()
     print("MCTS40:",winTally1[0])
     print("MCTS200:",winTally1[1])
+    print("Draws:",50-winTally1[0]-winTally1[1])
 
 main()

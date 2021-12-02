@@ -228,9 +228,9 @@ def main():
             mctscurr = mctscurr.children[action]
         if isWin(mctscurr.state, action, turn):
             if turn==1:
-                print("MCTS40 has won")
+                print("MCTS has won")
             else:
-                print("MCTS100 has won")
+                print("MCTS has lost")
             break
         turn = turn^3          
     print("game over")
