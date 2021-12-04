@@ -1,7 +1,10 @@
+from os import close
 from random import randint
 from math import sqrt, log2
 from pickle import dump, load
 
+
+# GAME BOARD #
 class GameNode:
     def __init__(self, state, turn, parent) -> None:
         self.state = state
@@ -13,14 +16,13 @@ class GameNode:
         self.children = [None]*5
         self.highest = [5,5,5,5,5]
 
+
 def move(state, col, player):
-    # print("move col:", col)
     if state[col]!='0':
         return state
     else:
         temp = []
         temp[:0] = state
-        # print(state)
         for i in range(5,-1,-1):
             if temp[5*i + col]=='0':
                 temp[5*i + col]=chr(player+ord('0'))
@@ -28,8 +30,8 @@ def move(state, col, player):
         state=""
         for i in temp:
             state += i
-    # print(state)
     return state
+
 
 def isWin(state, col, play):
     player = chr(play+ord('0'))
@@ -96,8 +98,18 @@ def isWin(state, col, play):
     
     return False
 
+
+def printState(state):
+    print("Board:")
+    for i in range(6):
+        for j in range (4):
+            print(state[i*5 + j], end=", ")
+        print (state[i*5 + 4])
+
+
+
+# MCTS #
 def simulate(node, player):
-    # print("sim: player =", player)
     curr = node.state
     highest = [0,0,0,0,0]
     for i in range(5):
@@ -120,16 +132,13 @@ def simulate(node, player):
         highest[act]-=1
         if isWin(new, act, turn):
             if turn==player:
-                # print("retval=1")
                 return 1
             else:
-                # print("retval=-1")
                 return -1
         elif max(highest)==0:
             break
         turn = turn^3
         curr=new
-    # print("retval=0")
     return 0
         
 
@@ -137,11 +146,9 @@ def traverse(root):
     retval=0
     # exploration factor
     c = 2.1
-    # print(root.state)
     
     if (not root.children[0]):
         # create 5 empty nodes
-        # print("extension")
         for i in range(5):
             if root.highest[i]<0:
                 continue
@@ -149,7 +156,6 @@ def traverse(root):
             root.children[i].highest[i]-=1
         # choose one of them at random
         next = randint(0,4)
-        # print("next:", next)
         nextNode = root.children[next]
         # simulate it
         retval = simulate(nextNode, root.turn^3)
@@ -168,13 +174,13 @@ def traverse(root):
             elif node.wins/node.plays + c*sqrt(log2(root.plays/node.plays)) > nextNode.wins/nextNode.plays + c*sqrt(log2(root.plays/nextNode.plays)):
                 nextNode = node
         retval = traverse(nextNode) * -1
-    # print("back to trav")
     if retval==-1:
         root.wins += 1
     elif retval==1:
         root.losses += 1
     root.plays+=1
     return -retval
+
 
 def mcts(root, n):
     # n = 10
@@ -194,11 +200,9 @@ def mcts(root, n):
     temp = newact
     flag = True
     if root.highest[newact]<0:
-        # print("newact:", newact, end=" ")
         newact = (newact+1)%5
         flag = False
     while root.highest[newact]<0 and newact!=temp:
-        # print(newact, end=" ")
         newact = (newact+1)%5
     if newact==temp and not flag:
         return -1
@@ -208,17 +212,19 @@ def mcts(root, n):
             break
         if root.highest[i]>=0 and root.children[i].plays > root.children[newact].plays:
             newact=i
-    # print("newact", newact)
     return newact
 
+
+
+# Q LEARNING #
 def qlearning(node, prevstate, prevact):
     # choose a state either exploit or explore
     currstate = node.state
     if currstate not in qtable:
-        qtable[currstate] = [1,1,1,1,1]
+        qtable[currstate] = [5,5,5,5,5]
 
     lr=0.1
-    gamma = 0.6
+    gamma = 1.5
     reward = -1
     prob = randint(0,9)
     newact=0
@@ -238,7 +244,6 @@ def qlearning(node, prevstate, prevact):
             qtable[currstate][newact] += lr * (reward - qtable[currstate][newact])
         elif max(node.highest)<0:
             qtable[newstate] = [0]*5
-            reward = -1
             qtable[currstate][newact] += lr * (reward - qtable[currstate][newact])
         else:
             qtable[prevstate][prevact] += lr * (reward + gamma * max(qtable[currstate]) - qtable[prevstate][prevact])
@@ -249,56 +254,81 @@ def qlearning(node, prevstate, prevact):
     return [newact, prevstate, prevact]
 
 def main():
-    # TODO: make sure game does not stall
-    turn = 1
-    action = 0
     global mctsroot1
     global mctsroot2
     global mctscurr1
     global mctscurr2
-    winTally1 = [0,0,0]
-    # winTally2 = [0,0]
-
-    global qtable
     global prevstate
     global prevact
+    global qtable
 
-    mctsroot1 = GameNode("000000000000000000000000000000", 1, None)
-    # qtable = {"000000000000000000000000000000": [1,1,1,1,1]}
+    part = input("Enter which part's answer is to be shown (a or c): ")
 
-    recent = [1]*50
-    perf = []
+    turn = 1
+    action = 0
+    
 
-    for j in range(500):
-        # if not (j+1)%10:
-        qtable = {"000000000000000000000000000000": [1,1,1,1,1]}
+    if part=="a" or part=="A":
+        mctsroot1 = GameNode("000000000000000000000000000000", 1, None)
+        mctsroot2 = GameNode("000000000000000000000000000000", 2, None)
         mctscurr1 = mctsroot1
-        prevstate = "000000000000000000000000000000"
-        prevact = -1
-        # print(mctscurr1.state)
+        mctscurr2 = mctsroot2
+        print(mctscurr2.state)
         while True:
-            # print()
+            print()
             if turn==1:
-                action = mcts(mctscurr1, 100)
+                action = mcts(mctscurr1, 200)
                 if action == -1:
-                    recent[j%50]=1
-                    winTally1[2]+=1
                     break
                 mctscurr1 = mctscurr1.children[action]
-                # if (not mctscurr2.children[0]):
-                #     # create 5 empty nodes
-                #     for i in range(5):
-                #         mctscurr2.children[i] = GameNode(move(state=mctscurr2.state, col=i, player=turn), turn ^ 3, mctscurr2)
-                #         mctscurr2.children[i].highest[i]-=1
-                # mctscurr2 = mctscurr2.children[action]
-                # print(turn, action)
-                # print(mctscurr1.state)
+                if (not mctscurr2.children[0]):
+                    # create 5 empty nodes
+                    for i in range(5):
+                        mctscurr2.children[i] = GameNode(move(state=mctscurr2.state, col=i, player=turn), turn ^ 3, mctscurr2)
+                        mctscurr2.children[i].highest[i]-=1
+                mctscurr2 = mctscurr2.children[action]
+                printState(mctscurr1.state)
+            else:
+                action = mcts(mctscurr2, 40)
+                if action == -1:
+                    break
+                mctscurr2 = mctscurr2.children[action]
+                if (not mctscurr1.children[0]):
+                    # create 5 empty nodes
+                    for i in range(5):
+                        mctscurr1.children[i] = GameNode(move(state=mctscurr1.state, col=i, player=turn), turn ^ 3, mctscurr1)
+                        mctscurr1.children[i].highest[i]-=1
+                mctscurr1 = mctscurr1.children[action]
+                printState(mctscurr2.state)
+            if isWin(mctscurr1.state, action, turn):
+                if turn==1:
+                    print("MCTS200 has won")
+                else:
+                    print("MCTS40 has won")
+                break
+            turn = turn^3
+
+    else:
+        mctsroot1 = GameNode("000000000000000000000000000000", 1, None)
+        mctscurr1 = mctsroot1
+        a_file = open("2018A7PS0133G_PARMESH.dat", "rb")
+        qtable = load(a_file)
+        prevstate = "000000000000000000000000000000"
+        prevact = -1
+
+        while True:
+            print()
+            if turn==1:
+                action = mcts(mctscurr1, 200)
+                if action == -1:
+                    print("Draw")
+                    break
+                mctscurr1 = mctscurr1.children[action]
+                printState(mctscurr1.state)
             else:
                 [action, prevstate, prevact] = qlearning(mctscurr1, prevstate, prevact)
                 if action == -1:
-                    recent[j%50]=1
-                    winTally1[2]+=1
-                    # print("Draw")
+                    print("Draw")
                     break
                 if (not mctscurr1.children[0]):
                     # create 5 empty nodes
@@ -306,34 +336,17 @@ def main():
                         mctscurr1.children[i] = GameNode(move(state=mctscurr1.state, col=i, player=turn), turn ^ 3, mctscurr1)
                         mctscurr1.children[i].highest[i]-=1
                 mctscurr1 = mctscurr1.children[action]
-                # printState(mctscurr1.state)
-                # print(mctscurr1.state)
+                printState(mctscurr1.state)
             if isWin(mctscurr1.state, action, turn):
-                # print(mctscurr1.state)
                 if turn==1:
-                    # print("MCTS has won")
-                    recent[j%50]=0
-                    winTally1[0]+=1
+                    print("MCTS has won")
                 else:
-                    # print("Q-Learning has won")
-                    recent[j%50]=2
-                    winTally1[1]+=1
+                    print("Q-Learning has won")
                 break
-            turn = turn^3          
-        # print("game over \n")
-        if not (j+1)%50:
-            print(recent)
-            perf.append(sum(recent))
-            print(sum(recent))
-        # print()
-    print("MCTS:",winTally1[0])
-    print("QLearning:",winTally1[1])
-    print("Draws:",winTally1[2])
-
-    a_file = open("2018A7PS0133G_PARMESH.dat", "wb")
-    dump(qtable, a_file)
-    a_file.close()
-
-    print(perf)
+            turn = turn^3
+        close(a_file)
+    
+    print("game over \n")
+    print()
 
 main()
